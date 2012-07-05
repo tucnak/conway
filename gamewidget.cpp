@@ -17,6 +17,7 @@ GameWidget::GameWidget(QWidget *parent) :
     m_masterColor = "#000";
     connect(timer, SIGNAL(timeout()), this, SLOT(newGeneration()));
     memset(&universe, false, sizeof(universe));
+    memset(&next, false, sizeof(next));
 }
 
 void GameWidget::startGame(const int &number)
@@ -114,8 +115,6 @@ void GameWidget::newGeneration()
 {
     if(generations < 0)
         generations++;
-    bool next[102][102];
-    memset(&next, false, sizeof(next));
     int notChanged=0;
     for(int k=1; k <= universeSize; k++) {
         for(int j=1; j <= universeSize; j++) {
@@ -168,14 +167,14 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
 
 void GameWidget::paintGrid(QPainter &p)
 {
-    QRect borders(0, 0, width()-1, height()-1);
-    QColor gridColor = m_masterColor;
-    gridColor.setAlpha(10);
+    QRect borders(0, 0, width()-1, height()-1); // borders of the universe
+    QColor gridColor = m_masterColor; // color of the grid
+    gridColor.setAlpha(10); // must be lighter than main color
     p.setPen(gridColor);
-    double cellWidth = (double)width()/universeSize;
+    double cellWidth = (double)width()/universeSize; // width of the widget / number of cells at one row
     for(double k = cellWidth; k <= width(); k += cellWidth)
         p.drawLine(k, 0, k, height());
-    double cellHeight = (double)height()/universeSize;
+    double cellHeight = (double)height()/universeSize; // height of the widget / number of cells at one row
     for(double k = cellHeight; k <= height(); k += cellHeight)
         p.drawLine(0, k, width(), k);
     p.drawRect(borders);
@@ -187,11 +186,11 @@ void GameWidget::paintUniverse(QPainter &p)
     double cellHeight = (double)height()/universeSize;
     for(int k=1; k <= universeSize; k++) {
         for(int j=1; j <= universeSize; j++) {
-            if(universe[k][j] == true) {
-                qreal left = (qreal)(cellWidth*j-cellWidth);
-                qreal top  = (qreal)(cellHeight*k-cellHeight);
+            if(universe[k][j] == true) { // if there is any sense to paint it
+                qreal left = (qreal)(cellWidth*j-cellWidth); // margin from left
+                qreal top  = (qreal)(cellHeight*k-cellHeight); // margin from top
                 QRectF r(left, top, (qreal)cellWidth, (qreal)cellHeight);
-                p.fillRect(r, QBrush(m_masterColor));
+                p.fillRect(r, QBrush(m_masterColor)); // fill cell with brush of main color
             }
         }
     }

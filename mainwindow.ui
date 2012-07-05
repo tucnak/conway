@@ -73,7 +73,7 @@
         <item>
          <widget class="QLabel" name="label2">
           <property name="text">
-           <string>Iteration interval (in msec)</string>
+           <string>Generation interval (in msec)</string>
           </property>
          </widget>
         </item>
@@ -92,7 +92,7 @@
            <number>10</number>
           </property>
           <property name="value">
-           <number>300</number>
+           <number>100</number>
           </property>
          </widget>
         </item>
