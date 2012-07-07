@@ -104,10 +104,8 @@ bool GameWidget::isAlive(int k, int j)
     power += universe[k-1][j-1];
     power += universe[k-1][j+1];
     power += universe[k+1][j-1];
-    if(universe[k][j] == false && power == 3)
-        return true;
-    if ((universe[k][j] == true) && ((power == 2) || (power == 3)))
-        return true;
+    if (((universe[k][j] == true) && (power == 2)) || (power == 3))
+           return true;
     return false;
 }
 
