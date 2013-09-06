@@ -163,6 +163,18 @@ void GameWidget::mousePressEvent(QMouseEvent *e)
     update();
 }
 
+void GameWidget::mouseMoveEvent(QMouseEvent *e)
+{
+    double cellWidth = (double)width()/universeSize;
+    double cellHeight = (double)height()/universeSize;
+    int k = floor(e->y()/cellHeight)+1;
+    int j = floor(e->x()/cellWidth)+1;
+    if(!universe[k][j]){                //if current cell is empty,fill in it
+        universe [k][j]= !universe[k][j];
+    update();
+    }
+}
+
 void GameWidget::paintGrid(QPainter &p)
 {
     QRect borders(0, 0, width()-1, height()-1); // borders of the universe
