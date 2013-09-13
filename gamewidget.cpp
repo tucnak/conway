@@ -15,9 +15,17 @@ GameWidget::GameWidget(QWidget *parent) :
 {
     timer->setInterval(300);
     m_masterColor = "#000";
+    universe = new bool[(universeSize + 2) * (universeSize + 2)];
+    next = new bool[(universeSize + 2) * (universeSize + 2)];
     connect(timer, SIGNAL(timeout()), this, SLOT(newGeneration()));
-    memset(&universe, false, sizeof(universe));
-    memset(&next, false, sizeof(next));
+    memset(universe, false, sizeof(bool)*(universeSize + 2) * (universeSize + 2));
+    memset(next, false, sizeof(bool)*(universeSize + 2) * (universeSize + 2));
+}
+
+GameWidget::~GameWidget()
+{
+    delete [] universe;
+    delete [] next;
 }
 
 void GameWidget::startGame(const int &number)
@@ -35,9 +43,10 @@ void GameWidget::clear()
 {
     for(int k = 1; k <= universeSize; k++) {
         for(int j = 1; j <= universeSize; j++) {
-            universe[k][j] = false;
+            universe[k*universeSize + j] = false;
         }
     }
+    gameEnds(true);
     update();
 }
 
@@ -49,7 +58,18 @@ int GameWidget::cellNumber()
 void GameWidget::setCellNumber(const int &s)
 {
     universeSize = s;
+    resetUniverse();
     update();
+}
+
+void GameWidget::resetUniverse()
+{
+    delete [] universe;
+    delete [] next;
+    universe = new bool[(universeSize + 2) * (universeSize + 2)];
+    next = new bool[(universeSize + 2) * (universeSize + 2)];
+    memset(universe, false, sizeof(bool)*(universeSize + 2) * (universeSize + 2));
+    memset(next, false, sizeof(bool)*(universeSize + 2) * (universeSize + 2));
 }
 
 QString GameWidget::dump()
@@ -58,7 +78,7 @@ QString GameWidget::dump()
     QString master = "";
     for(int k = 1; k <= universeSize; k++) {
         for(int j = 1; j <= universeSize; j++) {
-            if(universe[k][j] == true) {
+            if(universe[k*universeSize + j] == true) {
                 temp = '*';
             } else {
                 temp = 'o';
@@ -75,7 +95,7 @@ void GameWidget::setDump(const QString &data)
     int current = 0;
     for(int k = 1; k <= universeSize; k++) {
         for(int j = 1; j <= universeSize; j++) {
-            universe[k][j] = data[current] == '*';
+            universe[k*universeSize + j] = data[current] == '*';
             current++;
         }
         current++;
@@ -96,15 +116,15 @@ void GameWidget::setInterval(int msec)
 bool GameWidget::isAlive(int k, int j)
 {
     int power = 0;
-    power += universe[k+1][j];
-    power += universe[k-1][j];
-    power += universe[k][j+1];
-    power += universe[k][j-1];
-    power += universe[k+1][j+1];
-    power += universe[k-1][j-1];
-    power += universe[k-1][j+1];
-    power += universe[k+1][j-1];
-    if (((universe[k][j] == true) && (power == 2)) || (power == 3))
+    power += universe[(k+1)*universeSize +  j];
+    power += universe[(k-1)*universeSize + j];
+    power += universe[k*universeSize + (j+1)];
+    power += universe[k*universeSize + (j-1)];
+    power += universe[(k+1)*universeSize + ( j-1)];
+    power += universe[(k-1)*universeSize + (j+1)];
+    power += universe[(k-1)*universeSize + (j-1)];
+    power += universe[(k+1)*universeSize +  (j+1)];
+    if (((universe[k*universeSize + j] == true) && (power == 2)) || (power == 3))
            return true;
     return false;
 }
@@ -116,8 +136,8 @@ void GameWidget::newGeneration()
     int notChanged=0;
     for(int k=1; k <= universeSize; k++) {
         for(int j=1; j <= universeSize; j++) {
-            next[k][j] = isAlive(k, j);
-            if(next[k][j] == universe[k][j])
+            next[k*universeSize + j] = isAlive(k, j);
+            if(next[k*universeSize + j] == universe[k*universeSize + j])
                 notChanged++;
         }
     }
@@ -127,17 +147,19 @@ void GameWidget::newGeneration()
                                  tr("The End. Now game finished because all the next generations will be the same."),
                                  QMessageBox::Ok);
         stopGame();
+        gameEnds(true);
         return;
     }
     for(int k=1; k <= universeSize; k++) {
         for(int j=1; j <= universeSize; j++) {
-            universe[k][j] = next[k][j];
+            universe[k*universeSize + j] = next[k*universeSize + j];
         }
     }
     update();
     generations--;
     if(generations == 0) {
         stopGame();
+        gameEnds(true);
         QMessageBox::information(this,
                                  tr("Game finished."),
                                  tr("Iterations finished."),
@@ -155,11 +177,12 @@ void GameWidget::paintEvent(QPaintEvent *)
 
 void GameWidget::mousePressEvent(QMouseEvent *e)
 {
+    emit environmentChanged(true);
     double cellWidth = (double)width()/universeSize;
     double cellHeight = (double)height()/universeSize;
     int k = floor(e->y()/cellHeight)+1;
     int j = floor(e->x()/cellWidth)+1;
-    universe[k][j] = !universe[k][j];
+    universe[k*universeSize + j] = !universe[k*universeSize + j];
     update();
 }
 
@@ -169,9 +192,10 @@ void GameWidget::mouseMoveEvent(QMouseEvent *e)
     double cellHeight = (double)height()/universeSize;
     int k = floor(e->y()/cellHeight)+1;
     int j = floor(e->x()/cellWidth)+1;
-    if(!universe[k][j]){                //if current cell is empty,fill in it
-        universe [k][j]= !universe[k][j];
-    update();
+    int currentLocation = k*universeSize + j;
+    if(!universe[currentLocation]){                //if current cell is empty,fill in it
+        universe [currentLocation]= !universe[currentLocation];
+        update();
     }
 }
 
@@ -196,7 +220,7 @@ void GameWidget::paintUniverse(QPainter &p)
     double cellHeight = (double)height()/universeSize;
     for(int k=1; k <= universeSize; k++) {
         for(int j=1; j <= universeSize; j++) {
-            if(universe[k][j] == true) { // if there is any sense to paint it
+            if(universe[k*universeSize + j] == true) { // if there is any sense to paint it
                 qreal left = (qreal)(cellWidth*j-cellWidth); // margin from left
                 qreal top  = (qreal)(cellHeight*k-cellHeight); // margin from top
                 QRectF r(left, top, (qreal)cellWidth, (qreal)cellHeight);
