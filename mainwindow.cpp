@@ -52,16 +52,16 @@ void MainWindow::saveGame()
     if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return;
     QString s = QString::number(game->cellNumber())+"\n";
-    file.write(s.toAscii());
-    file.write(game->dump().toAscii());
+    file.write(s.toUtf8());
+    file.write(game->dump().toUtf8());
     QColor color = game->masterColor();
     QString buf = QString::number(color.red())+" "+
                   QString::number(color.green())+" "+
                   QString::number(color.blue())+"\n";
-    file.write(buf.toAscii());
+    file.write(buf.toUtf8());
     buf.clear();
     buf = QString::number(ui->iterInterval->value())+"\n";
-    file.write(buf.toAscii());
+    file.write(buf.toUtf8());
     file.close();
 }
 
